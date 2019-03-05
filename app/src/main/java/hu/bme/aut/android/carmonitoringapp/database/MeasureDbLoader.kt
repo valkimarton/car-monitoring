@@ -69,6 +69,11 @@ class MeasureDbLoader(private val context: Context) {
         return measuresUpdated > 0
     }
 
+    // Clear all measurements
+    fun clearAll() {
+        db.execSQL("delete from "+ DbConstants.Measure.DATABASE_TABLE)
+    }
+
     // Get all Measurements
     fun fetchAll(): Cursor {
         // Cursor pointing to the result set of all Measurements with all fields (where = null)
