@@ -55,6 +55,7 @@ class DashboardActivity : AppCompatActivity(), SensorEventListener {
 
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+        println( "!!! NEW ACCURACY : ${accuracy} ")
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
