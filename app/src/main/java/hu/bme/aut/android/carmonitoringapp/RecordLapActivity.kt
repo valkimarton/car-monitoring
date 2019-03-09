@@ -1,20 +1,14 @@
 package hu.bme.aut.android.carmonitoringapp
 
 import android.content.Context
-import android.database.Cursor
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
 import hu.bme.aut.android.carmonitoringapp.database.DbConstants
-import hu.bme.aut.android.carmonitoringapp.database.LoadMeasuresTask
-import hu.bme.aut.android.carmonitoringapp.database.MeasureDbLoader
+import hu.bme.aut.android.carmonitoringapp.database.MyDatabase
+import hu.bme.aut.android.carmonitoringapp.database.dao.MeasureDao
 import hu.bme.aut.android.carmonitoringapp.model.Measure
 import hu.bme.aut.android.carmonitoringapp.sensor.AccEventListener
 
@@ -24,15 +18,15 @@ class RecordLapActivity : AppCompatActivity() {
 
     // Database stuffs
 
-    private var measurementsCursor: Cursor? = null //TODO: Do we need this?
-    private lateinit var dbLoader: MeasureDbLoader
-    private var loadMeasuresTask: LoadMeasuresTask? = null
+    private var db: MyDatabase? = null
+    private var measureDao: MeasureDao? = null
 
 
-    //Sensor stuffs
+    // Sensor stuffs
 
-    private lateinit var sensorManager: SensorManager
     private lateinit var accEventListener: AccEventListener
+
+    // Views
 
     private lateinit var accelerationXView: TextView
     private lateinit var accelerationYView: TextView
@@ -51,7 +45,8 @@ class RecordLapActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         // Database connection handler
-        dbLoader = MeasureApplication.measureDbLoader
+        db = MeasureApplication.db
+        measureDao = db?.measureDao()
 
         // Getting the View references
         accelerationXView = findViewById(R.id.accX_text_record)
@@ -68,10 +63,11 @@ class RecordLapActivity : AppCompatActivity() {
         startButton.setOnClickListener { this.accEventListener.register() }
         stopButton.setOnClickListener { this.accEventListener.unregister() }
         printResultButton.setOnClickListener {
-            val measures: Cursor = this.dbLoader.fetchAll()
+            val measures: List<Measure>? = measureDao?.getMeasures()
             this.printMeasurePoints(measures)
+
         }
-        clearDbButton.setOnClickListener { this.dbLoader.clearAll() }
+        clearDbButton.setOnClickListener { measureDao?.deleteAllMeasures() }
 
         // Initializing the AccEventListener. "this" context needed for getSystemSercive -> sensorManager
         accEventListener = AccEventListener(this, accelerationXView, accelerationYView, accelerationZView)
@@ -80,58 +76,8 @@ class RecordLapActivity : AppCompatActivity() {
 
     }
 
-    override fun onResume() {
-        super.onResume()
 
-        refreshList()
+    fun printMeasurePoints(measurements: List<Measure>?) {
+        measurements?.forEach { println(it) }
     }
-
-    override fun onPause() {
-        super.onPause()
-
-        loadMeasuresTask?.cancel(false)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-
-        measurementsCursor?.close() //TODO: close cursor !!!
-    }
-
-    private fun refreshList() { //TODO: megérteni
-        loadMeasuresTask?.cancel(false)
-
-        val loadMeasuresTaskNew = LoadMeasuresTask(this, dbLoader)
-        loadMeasuresTaskNew.execute()
-
-        this.loadMeasuresTask = loadMeasuresTaskNew //TODO: megérteni
-    }
-
-    fun printMeasurePoints(measurements: Cursor?) {
-        if (measurements != null) {
-            //adapter = TodoAdapter(applicationContext, todos)
-            //setupRecyclerView()
-
-            println("No. of measurements: ${measurements.count} !!!")
-
-            measurementsCursor = measurements // TODO: fölösleges
-            measurements.moveToFirst()
-            while (!measurements.isAfterLast()) {
-                println(MeasureDbLoader.getMeasureByCursor(measurements).toString())
-                measurements.moveToNext()
-            }
-        } else {
-            println("There are no measurements to print!!!")
-        }
-        loadMeasuresTask = null
-    }
-
-    private fun createSampleMeasures() {
-        this.dbLoader.createMeasure( measure = Measure(123.123, 11.11, 5.0, 5.0, 5.0, 30.0) )
-        this.dbLoader.createMeasure( measure = Measure(123.123, 11.11, 5.0, 5.0, 5.0, 31.0) )
-        this.dbLoader.createMeasure( measure = Measure(123.123, 11.11, 5.0, 5.0, 5.0, 32.0) )
-        this.dbLoader.createMeasure( measure = Measure(123.123, 11.11, 5.0, 5.0, 5.0, 29.0) )
-
-    }
-
 }

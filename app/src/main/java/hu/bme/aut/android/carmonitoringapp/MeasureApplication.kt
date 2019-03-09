@@ -1,7 +1,8 @@
 package hu.bme.aut.android.carmonitoringapp
 
 import android.app.Application
-import hu.bme.aut.android.carmonitoringapp.database.MeasureDbLoader
+import android.arch.persistence.room.Room
+import hu.bme.aut.android.carmonitoringapp.database.MyDatabase
 
 /*
 * Az app indításakor példányosodik.
@@ -9,19 +10,18 @@ import hu.bme.aut.android.carmonitoringapp.database.MeasureDbLoader
 * Az app bezárásáig fut, akkor lezárja az adatbázis kapcsolatot.*/
 class MeasureApplication : Application(){
     companion object {
-        lateinit var measureDbLoader: MeasureDbLoader
-            private set
+        var db: MyDatabase? = null
     }
 
     override fun onCreate() {
         super.onCreate()
 
-        measureDbLoader = MeasureDbLoader(this)
-        measureDbLoader.open()
+        db = MyDatabase.getMyDatabase(this)
     }
 
     override fun onTerminate() {
-        measureDbLoader.close()
         super.onTerminate()
+
+        db?.close() // TODO: kell? Vagy a Room magától zárja?
     }
 }

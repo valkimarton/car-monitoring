@@ -7,7 +7,8 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.widget.TextView
 import hu.bme.aut.android.carmonitoringapp.MeasureApplication
-import hu.bme.aut.android.carmonitoringapp.database.MeasureDbLoader
+import hu.bme.aut.android.carmonitoringapp.database.MyDatabase
+import hu.bme.aut.android.carmonitoringapp.database.dao.MeasureDao
 import hu.bme.aut.android.carmonitoringapp.model.Measure
 
 class AccEventListener(
@@ -17,7 +18,8 @@ class AccEventListener(
     val accelerationZView: TextView): SensorEventListener {
 
     private val sensorManager: SensorManager
-    private val dbLoader: MeasureDbLoader
+    private var db: MyDatabase? = null
+    private var measureDao: MeasureDao? = null
 
     private val startTime: Double
 
@@ -25,7 +27,8 @@ class AccEventListener(
         // registering listener to the ACC sensor
         sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         // Database connection handler
-        dbLoader = MeasureApplication.measureDbLoader
+        db = MeasureApplication.db
+        measureDao = db?.measureDao()
 
         startTime = ( System.currentTimeMillis() / 1000 ).toDouble()
     }
@@ -37,7 +40,7 @@ class AccEventListener(
 
     override fun onSensorChanged(event: SensorEvent?) {
 
-        val time: Double = ( System.currentTimeMillis() / 1000.0 ).toDouble() - startTime
+        val time: Double = ( System.currentTimeMillis() / 1000.0 ) - startTime
 
         event?.let {
             val accXstring: String = String.format("%.2f", event.values[0])
@@ -48,7 +51,7 @@ class AccEventListener(
             accelerationYView.setText(accYstring)
             accelerationZView.setText(accZstring)
 
-            this.dbLoader.createMeasure(
+            /*this.dbLoader.createMeasure(
                 Measure(
                     0.0,
                     0.0,
@@ -57,7 +60,18 @@ class AccEventListener(
                     event.values[2].toDouble(),
                     time
                 )
+            )*/ //TODO: remove
+            measureDao?.insertMeasure(
+                Measure(
+                0.0,
+                0.0,
+                event.values[0].toDouble(),
+                event.values[1].toDouble(),
+                event.values[2].toDouble(),
+                time
+                )
             )
+
         }
 
     }
