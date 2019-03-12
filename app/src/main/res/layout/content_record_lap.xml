@@ -45,23 +45,39 @@
             android:id="@+id/stop_monitoring_button"
             app:layout_constraintStart_toEndOf="@+id/start_monitoring_button" app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="120dp" app:layout_constraintTop_toBottomOf="@+id/accZ_text_record"/>
+            android:layout_marginTop="72dp" app:layout_constraintTop_toBottomOf="@+id/accZ_text_record"/>
     <Button
             android:text="RESULTS"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/print_db_content_button"
             android:layout_marginTop="16dp" app:layout_constraintTop_toBottomOf="@+id/start_monitoring_button"
-            android:layout_marginBottom="8dp" app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintVertical_bias="0.518"
-            app:layout_constraintStart_toStartOf="@+id/start_monitoring_button"/>
+            app:layout_constraintStart_toStartOf="@+id/start_monitoring_button" android:layout_marginBottom="8dp"
+            app:layout_constraintBottom_toTopOf="@+id/button"/>
     <Button
-            android:text="CLEAR DB"
+            android:text="CLEAR THIS"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/clear_db_button" android:layout_marginTop="16dp"
-            app:layout_constraintTop_toBottomOf="@+id/stop_monitoring_button" android:layout_marginBottom="8dp"
-            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/stop_monitoring_button"
+            app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginEnd="8dp" app:layout_constraintStart_toEndOf="@+id/print_db_content_button"
-            android:layout_marginStart="8dp"/>
+            android:layout_marginStart="8dp" android:layout_marginBottom="8dp"
+            app:layout_constraintBottom_toTopOf="@+id/button2" app:layout_constraintHorizontal_bias="0.484"
+            app:layout_constraintVertical_bias="0.52"/>
+    <Button
+            android:text="TODO"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/button" app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintHorizontal_bias="0.5" app:layout_constraintEnd_toStartOf="@+id/button2"
+            android:layout_marginBottom="24dp" app:layout_constraintBottom_toBottomOf="parent"/>
+    <Button
+            android:text="CLEAR LAPS"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/button2"
+            app:layout_constraintStart_toEndOf="@+id/button" app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="@+id/button"/>
 </android.support.constraint.ConstraintLayout>

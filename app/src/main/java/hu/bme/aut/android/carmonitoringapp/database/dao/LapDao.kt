@@ -17,6 +17,9 @@ interface LapDao {
     @Delete
     fun delete(lap: Lap)
 
+    @Query("DELETE FROM Lap")
+    fun deleteAllLaps()
+
     @Query("SELECT * FROM Lap WHERE name == :name")
     fun getLapByName(name: String) : Lap
 

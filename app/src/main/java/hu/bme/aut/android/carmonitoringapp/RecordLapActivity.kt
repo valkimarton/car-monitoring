@@ -9,6 +9,7 @@ import android.widget.TextView
 import hu.bme.aut.android.carmonitoringapp.database.DbConstants
 import hu.bme.aut.android.carmonitoringapp.database.MyDatabase
 import hu.bme.aut.android.carmonitoringapp.database.dao.MeasureDao
+import hu.bme.aut.android.carmonitoringapp.fragments.YesNoDialog
 import hu.bme.aut.android.carmonitoringapp.model.Measure
 import hu.bme.aut.android.carmonitoringapp.sensor.AccEventListener
 
@@ -17,17 +18,14 @@ import kotlinx.android.synthetic.main.activity_record_lap.*
 class RecordLapActivity : AppCompatActivity() {
 
     // Database stuffs
-
     private var db: MyDatabase? = null
     private var measureDao: MeasureDao? = null
 
 
     // Sensor stuffs
-
     private lateinit var accEventListener: AccEventListener
 
     // Views
-
     private lateinit var accelerationXView: TextView
     private lateinit var accelerationYView: TextView
     private lateinit var accelerationZView: TextView
@@ -61,7 +59,13 @@ class RecordLapActivity : AppCompatActivity() {
 
         // Setting ClickListeners on buttons
         startButton.setOnClickListener { this.accEventListener.register() }
-        stopButton.setOnClickListener { this.accEventListener.unregister() }
+        stopButton.setOnClickListener {
+            this.accEventListener.unregister()
+
+            // Showing the AlertDialog
+            val saveDialog = YesNoDialog.newInstance("Title")
+            saveDialog.show(supportFragmentManager,"save_lap" )
+        }
         printResultButton.setOnClickListener {
             val measures: List<Measure>? = measureDao?.getMeasures()
             this.printMeasurePoints(measures)
