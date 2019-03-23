@@ -51,16 +51,6 @@ class AccEventListener(
             accelerationYView.setText(accYstring)
             accelerationZView.setText(accZstring)
 
-            /*this.dbLoader.createMeasure(
-                Measure(
-                    0.0,
-                    0.0,
-                    event.values[0].toDouble(),
-                    event.values[1].toDouble(),
-                    event.values[2].toDouble(),
-                    time
-                )
-            )*/ //TODO: remove
             measureDao?.insertMeasure(
                 Measure(
                 0.0,

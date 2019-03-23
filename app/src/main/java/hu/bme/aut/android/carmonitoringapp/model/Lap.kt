@@ -12,10 +12,16 @@ data class Lap(
     @PrimaryKey
     val name: String,
     val date: Date,
-    @TypeConverters(MeasureListConverter::class)
     val measures: List<Measure>
     // val id: Long? = null     // Jo lesz a "name" kulcsnak, nem?
 )
 {
-
+    override fun toString(): String {
+        var result: String =
+            "LAP:\n" +
+            "NAME: " + this.name + "\n" +
+            "DATE: " + this.date.toString() + "\n" +
+            "MEASURE POINTS: " + this.measures.size
+        return result;
+    }
 }
