@@ -3,12 +3,27 @@ package hu.bme.aut.android.carmonitoringapp.fragments
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
+import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
 import android.support.v4.app.DialogFragment
+import hu.bme.aut.android.carmonitoringapp.RecordLapActivity
+import hu.bme.aut.android.carmonitoringapp.model.Lap
 
 
 class YesNoDialog : DialogFragment() {
+
+    private lateinit var listener: OnDialogSaveLap
+
+    override fun onAttach(context: Context?) {
+        super.onAttach(context)
+        if (context is OnDialogSaveLap) {
+            listener = context
+        } else {
+            throw ClassCastException(context.toString() + " doesnt implement OnDialogSaveLap interface." +
+                    "DialogFragment can not send data back this way.")
+        }
+    }
 
     companion object {
         fun newInstance(title: String): YesNoDialog{
@@ -27,14 +42,18 @@ class YesNoDialog : DialogFragment() {
             builder.setMessage("Would you like to save this lap?")
                 .setPositiveButton("Save",
                     DialogInterface.OnClickListener { dialog, id ->
-                        println("SAVE!")
+                        listener.onDialogSaveLap(true)
                     })
                 .setNegativeButton("Dismiss",
                     DialogInterface.OnClickListener { dialog, id ->
-                        println("DISMISS!")
+                        listener.onDialogSaveLap(false)
                     })
             // Create the AlertDialog object and return it
             builder.create()
         } ?: throw IllegalStateException("Activity cannot be null")
+    }
+
+    interface OnDialogSaveLap {
+        fun onDialogSaveLap(addLap: Boolean)
     }
 }
