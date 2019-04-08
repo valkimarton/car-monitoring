@@ -18,7 +18,7 @@ data class Measure(
     override fun toString(): String {
         return "Time: ${time} sec," +
                 "Lat: ${latitude}, " +
-                "Alt: ${longitude}, " +
+                "Long: ${longitude}, " +
                 "accX: ${accX}, " +
                 "accY: ${accY}, " +
                 "accZ: ${accZ}, " +
