@@ -1,6 +1,12 @@
 package hu.bme.aut.android.carmonitoringapp.adapter
 
+import android.Manifest
+import android.app.Activity
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Environment
+import android.support.v4.app.ActivityCompat
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
@@ -8,6 +14,7 @@ import hu.bme.aut.android.carmonitoringapp.model.Lap
 import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import com.opencsv.CSVWriter
 import com.opencsv.bean.ColumnPositionMappingStrategy
 import com.opencsv.bean.StatefulBeanToCsv
@@ -56,12 +63,27 @@ public class LapAdapter(context: Context, resource: Int, laps: ArrayList<Lap>): 
         tvDate.setText(lap.date.toString())
         tvCount.setText(lap.measures.size.toString())
 
+        setExportButtonListener(lap, returnedView)
 
+
+        return returnedView
+    }
+
+    fun setExportButtonListener(lap: Lap, view: View){
         // setting clickListener on export button
-        val bExportButton: Button = returnedView.findViewById(R.id.result_lap_export_button)
+        val bExportButton: Button = view.findViewById(R.id.result_lap_export_button)
         bExportButton.setOnClickListener {
 
-            val file = File(context.filesDir, "measures.csv")
+            if (context.checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                Log.v("permission","Permission needed");
+                Toast.makeText(context, "Writing to storage permission was denied", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
+            val directory = getSavingDirectory()
+
+
+            val file = File(directory, lap.name + ".csv")
 
             var fileWriter: FileWriter? = null
             var csvWriter: CSVWriter? = null
@@ -95,6 +117,7 @@ public class LapAdapter(context: Context, resource: Int, laps: ArrayList<Lap>): 
 
                 println(file.absolutePath)
                 println("Write CSV using CSVWriter successfully!")
+                println(file.absolutePath)
             } catch (e: Exception) {
                 println("Writing CSV error!")
                 e.printStackTrace()
@@ -109,7 +132,15 @@ public class LapAdapter(context: Context, resource: Int, laps: ArrayList<Lap>): 
                 }
             }
         }
+    }
 
-        return returnedView
+    fun getSavingDirectory(): File? {
+        // Get the directory for the user's public pictures directory.
+        val dir = File(Environment.getExternalStoragePublicDirectory(
+            Environment.DIRECTORY_DOWNLOADS), "measures")
+        if (!dir?.mkdirs()) {
+            Log.e("export", "Directory not created")
+        }
+        return dir
     }
 }

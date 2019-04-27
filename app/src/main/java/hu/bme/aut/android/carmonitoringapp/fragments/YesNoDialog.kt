@@ -7,6 +7,9 @@ import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
 import android.support.v4.app.DialogFragment
+import android.view.View
+import android.widget.TextView
+import hu.bme.aut.android.carmonitoringapp.R
 import hu.bme.aut.android.carmonitoringapp.RecordLapActivity
 import hu.bme.aut.android.carmonitoringapp.model.Lap
 
@@ -39,14 +42,20 @@ class YesNoDialog : DialogFragment() {
         return activity?.let {
             // Use the Builder class for convenient dialog construction
             val builder = AlertDialog.Builder(it)
-            builder.setMessage("Would you like to save this lap?")
+            val inflater = requireActivity().layoutInflater
+            val innerView: View = inflater.inflate(R.layout.save_dialog_content, null)
+
+            builder.setView(innerView)
+                .setMessage("Would you like to save this lap?")
                 .setPositiveButton("Save",
                     DialogInterface.OnClickListener { dialog, id ->
-                        listener.onDialogSaveLap(true)
+                        val nameView: TextView = innerView.findViewById(R.id.text_dialog_lapname)
+                        val name: String = (nameView.text).toString()
+                        listener.onSaveLap(name)
                     })
                 .setNegativeButton("Dismiss",
                     DialogInterface.OnClickListener { dialog, id ->
-                        listener.onDialogSaveLap(false)
+                        listener.onDismissLap()
                     })
             // Create the AlertDialog object and return it
             builder.create()
@@ -54,6 +63,7 @@ class YesNoDialog : DialogFragment() {
     }
 
     interface OnDialogSaveLap {
-        fun onDialogSaveLap(addLap: Boolean)
+        fun onSaveLap(name: String)
+        fun onDismissLap()
     }
 }

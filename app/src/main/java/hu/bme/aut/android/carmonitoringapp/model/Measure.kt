@@ -5,12 +5,12 @@ import android.arch.persistence.room.PrimaryKey
 
 @Entity
 data class Measure(
-    val latitude: Double,
-    val longitude: Double,
-    val accX: Double,
-    val accY: Double,
-    val accZ: Double,
-    val time: Double,
+    var latitude: Double,
+    var longitude: Double,
+    var accX: Double,
+    var accY: Double,
+    var accZ: Double,
+    var time: Double,
     @PrimaryKey(autoGenerate = true)
     val id: Long? = null
 )

@@ -19,8 +19,8 @@
             android:layout_height="52dp" android:id="@+id/result_lap_measurement_count"
             android:layout_weight="0.3" android:textAlignment="center"/>
     <Button
-            android:text="Button"
+            android:text="E"
             android:layout_width="0dp"
             android:layout_height="52dp" android:id="@+id/result_lap_export_button" android:layout_weight="0.1"
-            tools:text="->"/>
+    />
 </LinearLayout>
