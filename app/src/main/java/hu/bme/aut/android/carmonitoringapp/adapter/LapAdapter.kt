@@ -6,8 +6,17 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import hu.bme.aut.android.carmonitoringapp.model.Lap
 import android.view.LayoutInflater
+import android.widget.Button
 import android.widget.TextView
+import com.opencsv.CSVWriter
+import com.opencsv.bean.ColumnPositionMappingStrategy
+import com.opencsv.bean.StatefulBeanToCsv
+import com.opencsv.bean.StatefulBeanToCsvBuilder
 import hu.bme.aut.android.carmonitoringapp.R
+import hu.bme.aut.android.carmonitoringapp.model.Measure
+import java.io.File
+import java.io.FileWriter
+import java.io.IOException
 
 
 public class LapAdapter(context: Context, resource: Int, laps: ArrayList<Lap>): ArrayAdapter<Lap>(context, resource, laps) {
@@ -46,6 +55,60 @@ public class LapAdapter(context: Context, resource: Int, laps: ArrayList<Lap>): 
         tvName.setText(lap.name)
         tvDate.setText(lap.date.toString())
         tvCount.setText(lap.measures.size.toString())
+
+
+        // setting clickListener on export button
+        val bExportButton: Button = returnedView.findViewById(R.id.result_lap_export_button)
+        bExportButton.setOnClickListener {
+
+            val file = File(context.filesDir, "measures.csv")
+
+            var fileWriter: FileWriter? = null
+            var csvWriter: CSVWriter? = null
+
+            try {
+                fileWriter = FileWriter(file)
+
+                // write String Array
+                csvWriter = CSVWriter(fileWriter,
+                    CSVWriter.DEFAULT_SEPARATOR,
+                    CSVWriter.NO_QUOTE_CHARACTER,
+                    CSVWriter.DEFAULT_ESCAPE_CHARACTER,
+                    CSVWriter.DEFAULT_LINE_END)
+
+                val CSV_HEADER = arrayOf<String>("id", "latitude", "longitude", "acc-x", "acc-y", "acc-z", "time")
+                csvWriter.writeNext(CSV_HEADER)
+
+                for (measure in lap.measures) {
+                    val data = arrayOf<String>(
+                        measure.id!!.toString(),
+                        measure.latitude.toString(),
+                        measure.longitude.toString(),
+                        measure.accX.toString(),
+                        measure.accY.toString(),
+                        measure.accZ.toString(),
+                        measure.time.toString()
+                    )
+
+                    csvWriter.writeNext(data)
+                }
+
+                println(file.absolutePath)
+                println("Write CSV using CSVWriter successfully!")
+            } catch (e: Exception) {
+                println("Writing CSV error!")
+                e.printStackTrace()
+            } finally {
+                try {
+                    fileWriter!!.flush()
+                    csvWriter!!.close()
+                    fileWriter.close()
+                } catch (e: IOException) {
+                    println("Flushing/closing error!")
+                    e.printStackTrace()
+                }
+            }
+        }
 
         return returnedView
     }
