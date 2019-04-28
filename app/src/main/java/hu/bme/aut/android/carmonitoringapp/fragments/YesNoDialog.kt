@@ -31,9 +31,6 @@ class YesNoDialog : DialogFragment() {
     companion object {
         fun newInstance(title: String): YesNoDialog{
             val dialog = YesNoDialog()
-            val args = Bundle()
-            // args.putString("title", title)
-            // dialog.arguments = args
             return dialog
         }
     }

@@ -28,6 +28,7 @@ import hu.bme.aut.android.carmonitoringapp.fragments.YesNoDialog
 import hu.bme.aut.android.carmonitoringapp.model.Lap
 import hu.bme.aut.android.carmonitoringapp.model.Measure
 import hu.bme.aut.android.carmonitoringapp.sensor.AccEventListener
+import hu.bme.aut.android.carmonitoringapp.sensor.MyLatLong
 
 import kotlinx.android.synthetic.main.activity_record_lap.*
 import java.text.DateFormat
@@ -46,6 +47,7 @@ class RecordLapActivity : AppCompatActivity(), YesNoDialog.OnDialogSaveLap, OnMa
     lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     lateinit var locationRequest : LocationRequest
     lateinit var locationCallback: LocationCallback
+    val myLatLong: MyLatLong = MyLatLong(0.0,0.0)
 
     val GPS_REQUEST_CODE = 1000
 
@@ -69,7 +71,6 @@ class RecordLapActivity : AppCompatActivity(), YesNoDialog.OnDialogSaveLap, OnMa
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_record_lap)
         setSupportActionBar(toolbar)
-
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         initDatabase()
@@ -81,7 +82,7 @@ class RecordLapActivity : AppCompatActivity(), YesNoDialog.OnDialogSaveLap, OnMa
 
         getViewsAndInitListeners()
 
-        accEventListener = AccEventListener(this, accelerationXView, accelerationYView, accelerationZView)
+        accEventListener = AccEventListener(this, accelerationXView, accelerationYView, accelerationZView, myLatLong)
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
@@ -110,6 +111,8 @@ class RecordLapActivity : AppCompatActivity(), YesNoDialog.OnDialogSaveLap, OnMa
 
     override fun onSaveLap(lapName: String) {
         val lapDate: Date = Date()
+
+        // TODO refineLocationData()
 
         val newLap: Lap = Lap(
             name = lapName,
@@ -142,6 +145,9 @@ class RecordLapActivity : AppCompatActivity(), YesNoDialog.OnDialogSaveLap, OnMa
             override fun onLocationResult(p0: LocationResult?) {
 
                 var location = p0!!.locations.get(p0.locations.size-1)
+
+                myLatLong.latitude = location.latitude
+                myLatLong.longitude = location.longitude
 
                 locationList.add(LatLng(location.latitude, location.longitude))
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), mMap.cameraPosition.zoom), 1000, null)

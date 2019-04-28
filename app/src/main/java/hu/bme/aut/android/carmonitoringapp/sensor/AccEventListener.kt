@@ -6,6 +6,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.widget.TextView
+import com.google.android.gms.maps.model.LatLng
 import hu.bme.aut.android.carmonitoringapp.MeasureApplication
 import hu.bme.aut.android.carmonitoringapp.database.MyDatabase
 import hu.bme.aut.android.carmonitoringapp.database.dao.MeasureDao
@@ -15,13 +16,17 @@ class AccEventListener(
     val context: Context,
     val accelerationXView: TextView,
     val accelerationYView: TextView,
-    val accelerationZView: TextView): SensorEventListener {
+    val accelerationZView: TextView,
+    val myLatLong: MyLatLong): SensorEventListener {
 
     private val sensorManager: SensorManager
     private var db: MyDatabase? = null
     private var measureDao: MeasureDao? = null
 
-    private val startTime: Double
+    private var startTime: Double
+    private val MIN_SAMPLING_TIME: Double = 0.1   // Sec
+
+    private var previousTime: Double = -MIN_SAMPLING_TIME  // To record the first measure point
 
     init {
         // registering listener to the ACC sensor
@@ -42,31 +47,36 @@ class AccEventListener(
 
         val time: Double = ( System.currentTimeMillis() / 1000.0 ) - startTime
 
-        event?.let {
-            val accXstring: String = String.format("%.2f", event.values[0])
-            val accYstring: String = String.format("%.2f", event.values[1])
-            val accZstring: String = String.format("%.2f", event.values[2])
+        if (time >= previousTime + MIN_SAMPLING_TIME){
+            event?.let {
+                val accXstring: String = String.format("%.2f", event.values[0])
+                val accYstring: String = String.format("%.2f", event.values[1])
+                val accZstring: String = String.format("%.2f", event.values[2])
 
-            accelerationXView.setText(accXstring)
-            accelerationYView.setText(accYstring)
-            accelerationZView.setText(accZstring)
+                accelerationXView.setText(accXstring)
+                accelerationYView.setText(accYstring)
+                accelerationZView.setText(accZstring)
 
-            measureDao?.insertMeasure(
-                Measure(
-                0.0,
-                0.0,
-                event.values[0].toDouble(),
-                event.values[1].toDouble(),
-                event.values[2].toDouble(),
-                time
+                measureDao?.insertMeasure(
+                    Measure(
+                        myLatLong.latitude,
+                        myLatLong.longitude,
+                        event.values[0].toDouble(),
+                        event.values[1].toDouble(),
+                        event.values[2].toDouble(),
+                        time
+                    )
                 )
-            )
 
+                previousTime = time
+            }
         }
+
 
     }
 
     fun register() {
+        startTime = ( System.currentTimeMillis() / 1000 ).toDouble()
         this.sensorManager.registerListener(
             this,
             sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),

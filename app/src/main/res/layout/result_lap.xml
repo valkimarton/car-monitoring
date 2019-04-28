@@ -21,6 +21,19 @@
     <Button
             android:text="E"
             android:layout_width="0dp"
-            android:layout_height="52dp" android:id="@+id/result_lap_export_button" android:layout_weight="0.1"
-    />
+            android:layout_height="52dp"
+            android:id="@+id/result_lap_export_button"
+            android:layout_weight="0.12"/>
+    <Button
+            android:text="I"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:id="@+id/result_lap_details_button"
+            android:layout_weight="0.12"/>
+    <Button
+            android:text="D"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:id="@+id/result_lap_delete_button"
+            android:layout_weight="0.12"/>
 </LinearLayout>

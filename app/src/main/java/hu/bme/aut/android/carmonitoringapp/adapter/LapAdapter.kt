@@ -3,6 +3,7 @@ package hu.bme.aut.android.carmonitoringapp.adapter
 import android.Manifest
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Environment
 import android.support.v4.app.ActivityCompat
@@ -19,7 +20,12 @@ import com.opencsv.CSVWriter
 import com.opencsv.bean.ColumnPositionMappingStrategy
 import com.opencsv.bean.StatefulBeanToCsv
 import com.opencsv.bean.StatefulBeanToCsvBuilder
+import hu.bme.aut.android.carmonitoringapp.DashboardActivity
+import hu.bme.aut.android.carmonitoringapp.LapDetailActivity
+import hu.bme.aut.android.carmonitoringapp.MeasureApplication
 import hu.bme.aut.android.carmonitoringapp.R
+import hu.bme.aut.android.carmonitoringapp.database.MyDatabase
+import hu.bme.aut.android.carmonitoringapp.database.dao.LapDao
 import hu.bme.aut.android.carmonitoringapp.model.Measure
 import java.io.File
 import java.io.FileWriter
@@ -32,11 +38,15 @@ public class LapAdapter(context: Context, resource: Int, laps: ArrayList<Lap>): 
     var laps: ArrayList<Lap>
     var layoutInflater: LayoutInflater
 
+    private var db: MyDatabase? = null
+    private var lapDao: LapDao? = null
+
     init {
         this.resource = resource
         this.laps = laps
         this.layoutInflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 
+        initDatabase()
     }
     // Returns the actual View to use in the ListView at a certain row position
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
@@ -64,9 +74,29 @@ public class LapAdapter(context: Context, resource: Int, laps: ArrayList<Lap>): 
         tvCount.setText(lap.measures.size.toString())
 
         setExportButtonListener(lap, returnedView)
+        setDetailsButtonListener(lap, returnedView)
+        setDeleteButtonListener(lap, returnedView)
 
 
         return returnedView
+    }
+
+    fun setDetailsButtonListener(lap: Lap, view: View){
+        val bDetailButton: Button = view.findViewById(R.id.result_lap_details_button)
+        bDetailButton.setOnClickListener {
+            val newIntent = Intent(context, LapDetailActivity::class.java)
+            newIntent.putExtra("name", lap.name)
+            context.startActivity(newIntent)
+        }
+    }
+
+    fun setDeleteButtonListener(lap: Lap, view: View){
+        val bDeleteButton: Button = view.findViewById(R.id.result_lap_delete_button)
+        bDeleteButton.setOnClickListener {
+            lapDao?.delete(lap)
+            laps.remove(lap)
+            notifyDataSetChanged()
+        }
     }
 
     fun setExportButtonListener(lap: Lap, view: View){
@@ -142,5 +172,11 @@ public class LapAdapter(context: Context, resource: Int, laps: ArrayList<Lap>): 
             Log.e("export", "Directory not created")
         }
         return dir
+    }
+
+    fun initDatabase(){
+        // Database connection handler
+        db = MeasureApplication.db
+        lapDao = db?.lapDao()
     }
 }

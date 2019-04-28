@@ -13,6 +13,7 @@ import hu.bme.aut.android.carmonitoringapp.adapter.LapAdapter
 import hu.bme.aut.android.carmonitoringapp.database.MyDatabase
 import hu.bme.aut.android.carmonitoringapp.database.dao.LapDao
 import hu.bme.aut.android.carmonitoringapp.model.Lap
+import kotlinx.android.synthetic.main.activity_record_lap.*
 
 class ResultsActivity : AppCompatActivity() {
 
@@ -26,6 +27,8 @@ class ResultsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_results)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         // Database connection handler
         db = MeasureApplication.db

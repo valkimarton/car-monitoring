@@ -5,5 +5,6 @@
     <string name="results">Results</string>
     <string name="title_activity_record_lap">Recording Lap</string>
     <string name="title_activity_dashboard">Dashboard</string>
-    <string name="title_activity_results">Dashboard</string>
+    <string name="title_activity_results">Results</string>
+    <string name="title_activity_lap_detail">Details</string>
 </resources>
