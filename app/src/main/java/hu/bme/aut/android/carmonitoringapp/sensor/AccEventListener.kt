@@ -24,7 +24,7 @@ class AccEventListener(
     private var measureDao: MeasureDao? = null
 
     private var startTime: Double
-    private val MIN_SAMPLING_TIME: Double = 0.1   // Sec
+    private val MIN_SAMPLING_TIME: Double = 0.05   // Sec
 
     private var previousTime: Double = -MIN_SAMPLING_TIME  // To record the first measure point
 

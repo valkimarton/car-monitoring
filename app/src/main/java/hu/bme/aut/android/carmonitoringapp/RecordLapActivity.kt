@@ -111,13 +111,16 @@ class RecordLapActivity : AppCompatActivity(), YesNoDialog.OnDialogSaveLap, OnMa
 
     override fun onSaveLap(lapName: String) {
         val lapDate: Date = Date()
+        val measures: List<Measure> = measureDao?.getMeasures() ?: ArrayList<Measure>()
 
-        // TODO refineLocationData()
+        // process Location data
+        fixValuesWithZeroLocation(measures)
+        interpolateLocationEqualLocationPointsByTime(measures)
 
         val newLap: Lap = Lap(
             name = lapName,
             date = lapDate,
-            measures = measureDao?.getMeasures() ?: ArrayList<Measure>()
+            measures = measures
         )
         lapDao?.insert(newLap)
 
@@ -131,6 +134,50 @@ class RecordLapActivity : AppCompatActivity(), YesNoDialog.OnDialogSaveLap, OnMa
         measureDao?.deleteAllMeasures()
 
         println("LAP DISMISSED")
+    }
+
+    fun fixValuesWithZeroLocation(measures: List<Measure>) {
+        // Fix (0,0) locations at the beginning of the list
+        var i: Int = 0
+        while (measures.get(i).latitude == 0.0){
+            i++
+        }
+
+        val indexOfFirstValid: Int = i
+        val firstValidLatitude: Double = measures.get(indexOfFirstValid).latitude
+        val firstValidLongitude: Double = measures.get(indexOfFirstValid).longitude
+
+        for (j in 0 until indexOfFirstValid){
+            measures.get(j).latitude = firstValidLatitude
+            measures.get(j).longitude = firstValidLongitude
+        }
+    }
+
+    fun interpolateLocationEqualLocationPointsByTime(measures: List<Measure>) {
+        var currentIndex: Int = 0
+        var frontIndex: Int = 0
+        var backIndex: Int = 0
+
+        while (frontIndex < measures.size) {
+            while (measures.get(frontIndex).latitude == measures.get(backIndex).latitude) {
+                if (frontIndex + 1 >= measures.size)
+                    return
+                frontIndex++
+            }
+
+            while (currentIndex < frontIndex) {
+                var current: Measure = measures.get(currentIndex)
+                var back: Measure = measures.get(backIndex)
+                var front: Measure = measures.get(frontIndex)
+
+                val timeProportion: Double = (current.time - back.time) / (front.time - back.time)
+                current.latitude = back.latitude + timeProportion * (front.latitude - back.latitude)
+                current.longitude = back.longitude + timeProportion * (front.longitude - back.longitude)
+
+                currentIndex++
+            }
+            backIndex = frontIndex
+        }
     }
 
     fun initDatabase(){
