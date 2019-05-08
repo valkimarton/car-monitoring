@@ -1,6 +1,7 @@
 package hu.bme.aut.android.carmonitoringapp
 
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
@@ -29,6 +30,7 @@ import hu.bme.aut.android.carmonitoringapp.model.Lap
 import hu.bme.aut.android.carmonitoringapp.model.Measure
 import hu.bme.aut.android.carmonitoringapp.sensor.AccEventListener
 import hu.bme.aut.android.carmonitoringapp.sensor.MyLatLong
+import hu.bme.aut.android.carmonitoringapp.views.ArrowView
 
 import kotlinx.android.synthetic.main.activity_record_lap.*
 import java.text.DateFormat
@@ -69,6 +71,8 @@ class RecordLapActivity : AppCompatActivity(), YesNoDialog.OnDialogSaveLap, OnMa
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
         setContentView(R.layout.activity_record_lap)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -93,6 +97,12 @@ class RecordLapActivity : AppCompatActivity(), YesNoDialog.OnDialogSaveLap, OnMa
         if(ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION )){
             ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), GPS_REQUEST_CODE)
         }
+
+
+        // Arrow View
+        val arrowView: ArrowView = findViewById(R.id.arrow_view_record_lap)
+        //arrowView.setBackgroundColor(Color.GREEN)
+
 
 
     }

@@ -1,5 +1,6 @@
 package hu.bme.aut.android.carmonitoringapp.sensor
 
+import android.app.Activity
 import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -8,9 +9,11 @@ import android.hardware.SensorManager
 import android.widget.TextView
 import com.google.android.gms.maps.model.LatLng
 import hu.bme.aut.android.carmonitoringapp.MeasureApplication
+import hu.bme.aut.android.carmonitoringapp.R
 import hu.bme.aut.android.carmonitoringapp.database.MyDatabase
 import hu.bme.aut.android.carmonitoringapp.database.dao.MeasureDao
 import hu.bme.aut.android.carmonitoringapp.model.Measure
+import hu.bme.aut.android.carmonitoringapp.views.ArrowView
 
 class AccEventListener(
     val context: Context,
@@ -67,6 +70,9 @@ class AccEventListener(
                         time
                     )
                 )
+
+                val arrowView: ArrowView = (context as Activity).findViewById(R.id.arrow_view_record_lap)
+                arrowView.setAccelerationAndUpdate(event.values[0], event.values[1])
 
                 previousTime = time
             }
