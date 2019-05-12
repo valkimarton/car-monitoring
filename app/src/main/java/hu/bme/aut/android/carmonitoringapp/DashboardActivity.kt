@@ -25,9 +25,9 @@ class DashboardActivity : AppCompatActivity(), SensorEventListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dashboard)
-        setSupportActionBar(toolbar)
+        //setSupportActionBar(toolbar)
 
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        //supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         accelerationXView = findViewById(R.id.acceleration_x_text)
         accelerationYView = findViewById(R.id.acceleration_y_text)
