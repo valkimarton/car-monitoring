@@ -23,14 +23,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         val resultsButton: Button = findViewById(R.id.results_button)
-        resultsButton.setOnClickListener { Toast.makeText(this, "Not implemented yet", Toast.LENGTH_SHORT).show() }
+        resultsButton.setOnClickListener {
+            startActivity(Intent(this, ResultsActivity::class.java))
+        }
 
-        println("PRINT\n\n PRINT\n" +
-                "\nPRINT\n" +
-                "\nPRINT\n" +
-                "\nPRINT\n" +
-                "\nPRINT\n" +
-                "\n ")
 
     }
 }

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <TextView
+            android:text="TextView"
+            android:layout_width="0dp"
+            android:layout_height="52dp" android:id="@+id/result_lap_name" android:layout_weight="0.3"
+            android:textAlignment="center"/>
+    <TextView
+            android:text="TextView"
+            android:layout_width="0dp"
+            android:layout_height="52dp" android:id="@+id/result_lap_date" android:layout_weight="0.3"
+            android:textAlignment="center"/>
+    <TextView
+            android:text="TextView"
+            android:layout_width="0dp"
+            android:layout_height="52dp" android:id="@+id/result_lap_measurement_count"
+            android:layout_weight="0.3" android:textAlignment="center"/>
+    <Button
+            android:text="E"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:id="@+id/result_lap_export_button"
+            android:layout_weight="0.12"/>
+    <Button
+            android:text="I"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:id="@+id/result_lap_details_button"
+            android:layout_weight="0.12"/>
+    <Button
+            android:text="D"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:id="@+id/result_lap_delete_button"
+            android:layout_weight="0.12"/>
+</LinearLayout>

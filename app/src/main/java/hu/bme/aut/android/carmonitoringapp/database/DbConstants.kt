@@ -3,7 +3,7 @@ package hu.bme.aut.android.carmonitoringapp.database
 object DbConstants {
 
     const val DATABASE_NAME = "data.db"
-    const val DATABASE_VERSION = 1
+    const val DATABASE_VERSION = 2
     const val DATABASE_CREATE_ALL = Measure.DATABASE_CREATE
     const val DATABASE_DROP_ALL = Measure.DATABASE_DROP
 

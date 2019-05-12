@@ -1,58 +1,245 @@
 package hu.bme.aut.android.carmonitoringapp
 
 import android.content.Context
-import android.database.Cursor
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
+import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Bundle
+import android.os.Looper
 import android.support.design.widget.Snackbar
+import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
+import com.google.android.gms.location.*
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.Polyline
+import com.google.android.gms.maps.model.PolylineOptions
 import hu.bme.aut.android.carmonitoringapp.database.DbConstants
-import hu.bme.aut.android.carmonitoringapp.database.LoadMeasuresTask
-import hu.bme.aut.android.carmonitoringapp.database.MeasureDbLoader
+import hu.bme.aut.android.carmonitoringapp.database.MyDatabase
+import hu.bme.aut.android.carmonitoringapp.database.dao.LapDao
+import hu.bme.aut.android.carmonitoringapp.database.dao.MeasureDao
+import hu.bme.aut.android.carmonitoringapp.fragments.YesNoDialog
+import hu.bme.aut.android.carmonitoringapp.model.Lap
 import hu.bme.aut.android.carmonitoringapp.model.Measure
 import hu.bme.aut.android.carmonitoringapp.sensor.AccEventListener
+import hu.bme.aut.android.carmonitoringapp.sensor.MyLatLong
+import hu.bme.aut.android.carmonitoringapp.views.ArrowView
 
 import kotlinx.android.synthetic.main.activity_record_lap.*
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.util.*
 
-class RecordLapActivity : AppCompatActivity() {
+class RecordLapActivity : AppCompatActivity(), YesNoDialog.OnDialogSaveLap, OnMapReadyCallback {
 
     // Database stuffs
+    private var db: MyDatabase? = null
+    private var measureDao: MeasureDao? = null
+    private var lapDao: LapDao? = null
 
-    private var measurementsCursor: Cursor? = null //TODO: Do we need this?
-    private lateinit var dbLoader: MeasureDbLoader
-    private var loadMeasuresTask: LoadMeasuresTask? = null
+    // GPS
+    lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+    lateinit var locationRequest : LocationRequest
+    lateinit var locationCallback: LocationCallback
+    val myLatLong: MyLatLong = MyLatLong(0.0,0.0)
 
+    val GPS_REQUEST_CODE = 1000
 
-    //Sensor stuffs
+    // map
+    private lateinit var mMap: GoogleMap
+    private var locationList: ArrayList<LatLng> = ArrayList<LatLng>()
+    private lateinit var line: Polyline
 
-    private lateinit var sensorManager: SensorManager
+    // Sensor stuffs
     private lateinit var accEventListener: AccEventListener
 
+    // Views
     private lateinit var accelerationXView: TextView
     private lateinit var accelerationYView: TextView
     private lateinit var accelerationZView: TextView
 
     private lateinit var startButton: Button
     private lateinit var stopButton: Button
-    private lateinit var printResultButton: Button
-    private lateinit var clearDbButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
         setContentView(R.layout.activity_record_lap)
         setSupportActionBar(toolbar)
-
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        // Database connection handler
-        dbLoader = MeasureApplication.measureDbLoader
+        initDatabase()
 
+        // location updates
+        buildLocationRequest()
+        buildLocationCallback()
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+
+        getViewsAndInitListeners()
+
+        accEventListener = AccEventListener(this, accelerationXView, accelerationYView, accelerationZView, myLatLong)
+
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        val mapFragment = supportFragmentManager
+            .findFragmentById(R.id.map) as SupportMapFragment
+        mapFragment.getMapAsync(this)
+
+        //Check permission
+        if(ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION )){
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), GPS_REQUEST_CODE)
+        }
+
+
+        // Arrow View
+        val arrowView: ArrowView = findViewById(R.id.arrow_view_record_lap)
+        //arrowView.setBackgroundColor(Color.GREEN)
+
+
+
+    }
+
+    override fun onMapReady(googleMap: GoogleMap) {
+        mMap = googleMap
+
+        // Add polylines and polygons to the map. This section shows just
+        // a single polyline. Read the rest of the tutorial to learn more.
+        val options: PolylineOptions = PolylineOptions().width(5f).color(Color.BLUE).geodesic(true)
+        line = mMap.addPolyline(options)
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(47.4813, 19.0555), 18.0f))  // BME
+    }
+
+
+    override fun onSaveLap(lapName: String) {
+        val lapDate: Date = Date()
+        val measures: List<Measure> = measureDao?.getMeasures() ?: ArrayList<Measure>()
+
+        // process Location data
+        fixValuesWithZeroLocation(measures)
+        interpolateLocationEqualLocationPointsByTime(measures)
+
+        val newLap: Lap = Lap(
+            name = lapName,
+            date = lapDate,
+            measures = measures
+        )
+        lapDao?.insert(newLap)
+
+        // Deleting the measurement points from the 'Measure' table
+        measureDao?.deleteAllMeasures()
+
+        println("LAP SAVED")
+    }
+
+    override fun onDismissLap() {
+        measureDao?.deleteAllMeasures()
+
+        println("LAP DISMISSED")
+    }
+
+    fun fixValuesWithZeroLocation(measures: List<Measure>) {
+        // Fix (0,0) locations at the beginning of the list
+        var i: Int = 0
+        while (measures.get(i).latitude == 0.0){
+            i++
+        }
+
+        val indexOfFirstValid: Int = i
+        val firstValidLatitude: Double = measures.get(indexOfFirstValid).latitude
+        val firstValidLongitude: Double = measures.get(indexOfFirstValid).longitude
+
+        for (j in 0 until indexOfFirstValid){
+            measures.get(j).latitude = firstValidLatitude
+            measures.get(j).longitude = firstValidLongitude
+        }
+    }
+
+    fun interpolateLocationEqualLocationPointsByTime(measures: List<Measure>) {
+        var currentIndex: Int = 0
+        var frontIndex: Int = 0
+        var backIndex: Int = 0
+
+        while (frontIndex < measures.size) {
+            while (measures.get(frontIndex).latitude == measures.get(backIndex).latitude) {
+                if (frontIndex + 1 >= measures.size)
+                    return
+                frontIndex++
+            }
+
+            while (currentIndex < frontIndex) {
+                var current: Measure = measures.get(currentIndex)
+                var back: Measure = measures.get(backIndex)
+                var front: Measure = measures.get(frontIndex)
+
+                val timeProportion: Double = (current.time - back.time) / (front.time - back.time)
+                current.latitude = back.latitude + timeProportion * (front.latitude - back.latitude)
+                current.longitude = back.longitude + timeProportion * (front.longitude - back.longitude)
+
+                currentIndex++
+            }
+            backIndex = frontIndex
+        }
+    }
+
+    fun initDatabase(){
+        // Database connection handler
+        db = MeasureApplication.db
+        measureDao = db?.measureDao()
+        lapDao = db?.lapDao()
+    }
+
+    private fun buildLocationCallback() {
+        locationCallback = object: LocationCallback(){
+            override fun onLocationResult(p0: LocationResult?) {
+
+                var location = p0!!.locations.get(p0.locations.size-1)
+
+                myLatLong.latitude = location.latitude
+                myLatLong.longitude = location.longitude
+
+                locationList.add(LatLng(location.latitude, location.longitude))
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), mMap.cameraPosition.zoom), 1000, null)
+
+                redrawLine()
+                mMap.addMarker(MarkerOptions().position(LatLng(location.latitude, location.longitude)).title("Marker"))
+
+            }
+        }
+    }
+
+    private fun buildLocationRequest() {
+
+        locationRequest = LocationRequest()
+        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        locationRequest.interval = 160
+        locationRequest.fastestInterval = 80
+        locationRequest.smallestDisplacement = 0.2f
+
+    }
+
+    private fun redrawLine() {
+
+        mMap.clear()  //clears all Markers and Polylines
+
+        val options = PolylineOptions().width(5f).color(Color.BLUE).geodesic(true)
+        for (i in 0 until locationList.size) {
+            val point = locationList.get(i)
+            options.add(point)
+        }
+        // addMarker() //add Marker in current position
+        line = mMap.addPolyline(options) //add Polyline
+    }
+
+    fun getViewsAndInitListeners(){
         // Getting the View references
         accelerationXView = findViewById(R.id.accX_text_record)
         accelerationYView = findViewById(R.id.accY_text_record)
@@ -61,77 +248,46 @@ class RecordLapActivity : AppCompatActivity() {
         // Getting ButtonView references
         startButton = findViewById(R.id.start_monitoring_button)
         stopButton = findViewById(R.id.stop_monitoring_button)
-        printResultButton = findViewById(R.id.print_db_content_button)
-        clearDbButton = findViewById(R.id.clear_db_button)
 
         // Setting ClickListeners on buttons
-        startButton.setOnClickListener { this.accEventListener.register() }
-        stopButton.setOnClickListener { this.accEventListener.unregister() }
-        printResultButton.setOnClickListener {
-            val measures: Cursor = this.dbLoader.fetchAll()
-            this.printMeasurePoints(measures)
-        }
-        clearDbButton.setOnClickListener { this.dbLoader.clearAll() }
+        startButton.setOnClickListener {
+            measureDao?.deleteAllMeasures()
 
-        // Initializing the AccEventListener. "this" context needed for getSystemSercive -> sensorManager
-        accEventListener = AccEventListener(this, accelerationXView, accelerationYView, accelerationZView)
-
-        //createSampleMeasures()
-
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        refreshList()
-    }
-
-    override fun onPause() {
-        super.onPause()
-
-        loadMeasuresTask?.cancel(false)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-
-        measurementsCursor?.close() //TODO: close cursor !!!
-    }
-
-    private fun refreshList() { //TODO: megérteni
-        loadMeasuresTask?.cancel(false)
-
-        val loadMeasuresTaskNew = LoadMeasuresTask(this, dbLoader)
-        loadMeasuresTaskNew.execute()
-
-        this.loadMeasuresTask = loadMeasuresTaskNew //TODO: megérteni
-    }
-
-    fun printMeasurePoints(measurements: Cursor?) {
-        if (measurements != null) {
-            //adapter = TodoAdapter(applicationContext, todos)
-            //setupRecyclerView()
-
-            println("No. of measurements: ${measurements.count} !!!")
-
-            measurementsCursor = measurements // TODO: fölösleges
-            measurements.moveToFirst()
-            while (!measurements.isAfterLast()) {
-                println(MeasureDbLoader.getMeasureByCursor(measurements).toString())
-                measurements.moveToNext()
+            if(ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+            {
+                ActivityCompat.requestPermissions(this, arrayOf( android.Manifest.permission.ACCESS_FINE_LOCATION), GPS_REQUEST_CODE)
+                return@setOnClickListener
             }
-        } else {
-            println("There are no measurements to print!!!")
+            // Starting Location updates
+            fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper())
+
+            // Starting acceleration updates
+            this.accEventListener.register()
+
+            startButton.isEnabled = false
+            stopButton.isEnabled = true
         }
-        loadMeasuresTask = null
+        stopButton.setOnClickListener {
+            this.accEventListener.unregister()
+
+            if(ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+            {
+                ActivityCompat.requestPermissions(this, arrayOf( android.Manifest.permission.ACCESS_FINE_LOCATION), GPS_REQUEST_CODE)
+                return@setOnClickListener
+            }
+            //Stop Location updates
+            fusedLocationProviderClient.removeLocationUpdates(locationCallback)
+
+            // Showing the AlertDialog
+            val saveDialog = YesNoDialog.newInstance("Title")
+            saveDialog.show(supportFragmentManager,"save_lap" )
+
+            startButton.isEnabled = true
+            stopButton.isEnabled = false
+        }
     }
 
-    private fun createSampleMeasures() {
-        this.dbLoader.createMeasure( measure = Measure(123.123, 11.11, 5.0, 5.0, 5.0, 30.0) )
-        this.dbLoader.createMeasure( measure = Measure(123.123, 11.11, 5.0, 5.0, 5.0, 31.0) )
-        this.dbLoader.createMeasure( measure = Measure(123.123, 11.11, 5.0, 5.0, 5.0, 32.0) )
-        this.dbLoader.createMeasure( measure = Measure(123.123, 11.11, 5.0, 5.0, 5.0, 29.0) )
-
-    }
 
 }

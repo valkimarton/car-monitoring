@@ -1,31 +1,42 @@
 package hu.bme.aut.android.carmonitoringapp.sensor
 
+import android.app.Activity
 import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.widget.TextView
+import com.google.android.gms.maps.model.LatLng
 import hu.bme.aut.android.carmonitoringapp.MeasureApplication
-import hu.bme.aut.android.carmonitoringapp.database.MeasureDbLoader
+import hu.bme.aut.android.carmonitoringapp.R
+import hu.bme.aut.android.carmonitoringapp.database.MyDatabase
+import hu.bme.aut.android.carmonitoringapp.database.dao.MeasureDao
 import hu.bme.aut.android.carmonitoringapp.model.Measure
+import hu.bme.aut.android.carmonitoringapp.views.ArrowView
 
 class AccEventListener(
     val context: Context,
     val accelerationXView: TextView,
     val accelerationYView: TextView,
-    val accelerationZView: TextView): SensorEventListener {
+    val accelerationZView: TextView,
+    val myLatLong: MyLatLong): SensorEventListener {
 
     private val sensorManager: SensorManager
-    private val dbLoader: MeasureDbLoader
+    private var db: MyDatabase? = null
+    private var measureDao: MeasureDao? = null
 
-    private val startTime: Double
+    private var startTime: Double
+    private val MIN_SAMPLING_TIME: Double = 0.05   // Sec
+
+    private var previousTime: Double = -MIN_SAMPLING_TIME  // To record the first measure point
 
     init {
         // registering listener to the ACC sensor
         sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         // Database connection handler
-        dbLoader = MeasureApplication.measureDbLoader
+        db = MeasureApplication.db
+        measureDao = db?.measureDao()
 
         startTime = ( System.currentTimeMillis() / 1000 ).toDouble()
     }
@@ -37,32 +48,41 @@ class AccEventListener(
 
     override fun onSensorChanged(event: SensorEvent?) {
 
-        val time: Double = ( System.currentTimeMillis() / 1000.0 ).toDouble() - startTime
+        val time: Double = ( System.currentTimeMillis() / 1000.0 ) - startTime
 
-        event?.let {
-            val accXstring: String = String.format("%.2f", event.values[0])
-            val accYstring: String = String.format("%.2f", event.values[1])
-            val accZstring: String = String.format("%.2f", event.values[2])
+        if (time >= previousTime + MIN_SAMPLING_TIME){
+            event?.let {
+                val accXstring: String = String.format("%.2f", event.values[0])
+                val accYstring: String = String.format("%.2f", event.values[1])
+                val accZstring: String = String.format("%.2f", event.values[2])
 
-            accelerationXView.setText(accXstring)
-            accelerationYView.setText(accYstring)
-            accelerationZView.setText(accZstring)
+                accelerationXView.setText(accXstring)
+                accelerationYView.setText(accYstring)
+                accelerationZView.setText(accZstring)
 
-            this.dbLoader.createMeasure(
-                Measure(
-                    0.0,
-                    0.0,
-                    event.values[0].toDouble(),
-                    event.values[1].toDouble(),
-                    event.values[2].toDouble(),
-                    time
+                measureDao?.insertMeasure(
+                    Measure(
+                        myLatLong.latitude,
+                        myLatLong.longitude,
+                        event.values[0].toDouble(),
+                        event.values[1].toDouble(),
+                        event.values[2].toDouble(),
+                        time
+                    )
                 )
-            )
+
+                val arrowView: ArrowView = (context as Activity).findViewById(R.id.arrow_view_record_lap)
+                arrowView.setAccelerationAndUpdate(event.values[0], event.values[1])
+
+                previousTime = time
+            }
         }
+
 
     }
 
     fun register() {
+        startTime = ( System.currentTimeMillis() / 1000 ).toDouble()
         this.sensorManager.registerListener(
             this,
             sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
