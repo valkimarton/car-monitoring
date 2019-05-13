@@ -8,6 +8,8 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import hu.bme.aut.android.carmonitoringapp.R
+import android.graphics.Path
+
 
 class ArrowView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -25,7 +27,7 @@ class ArrowView @JvmOverloads constructor(
 
     init {
         linePaint.color = Color.RED
-        linePaint.strokeWidth = 8f
+        linePaint.strokeWidth = 4f
     }
 
     public override fun onDraw(canvas: Canvas) {
@@ -48,9 +50,31 @@ class ArrowView @JvmOverloads constructor(
 
         Log.d("arrowView", "centre: ${centreX}, ${centreY}")
         Log.d("arrowView", "${this.x}, ${this.y}, ${this.width}, ${this.height}")
+
+        // ArrowHead
+        // B and C are the remaining two vertices of the arrowhead. T is at the middle of these two.
+
+        val angle = Math.atan2( (yCoord - centreY).toDouble() , (xCoord - centreX).toDouble() )
+        val arrowLength = Math.sqrt( ((xCoord-centreX)*(xCoord-centreX) + (yCoord-centreY)*(yCoord-centreY)).toDouble() )
+
+        val xT = centreX + Math.cos(angle) * 2/3 * arrowLength
+        val yT = centreY + Math.sin(angle) * 2/3 * arrowLength
+
+        val xB = xT - Math.sin(angle) * 1/10 * arrowLength
+        val yB = yT + Math.cos(angle) * 1/10 * arrowLength
+        val xC = xT + Math.sin(angle) * 1/10 * arrowLength
+        val yC = yT - Math.cos(angle) * 1/10 * arrowLength
+
+        val path = Path()
+        path.moveTo(xCoord, yCoord)
+        path.lineTo(xB.toFloat(), yB.toFloat())
+        path.lineTo(xC.toFloat(), yC.toFloat())
+        path.lineTo(xCoord, yCoord)
+        canvas.drawPath(path, linePaint);
+
     }
 
-    public fun setAccelerationAndUpdate(accX: Float, accY: Float){
+    fun setAccelerationAndUpdate(accX: Float, accY: Float){
         this.accX = accX
         this.accY = accY
         this.invalidate()
