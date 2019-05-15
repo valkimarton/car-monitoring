@@ -121,6 +121,7 @@
                     android:layout_height="300dp"
                     android:layout_centerInParent="true"
                     android:background="@drawable/ellipse"
+                    android:rotation="-210"
             />
 
             <View
@@ -137,7 +138,8 @@
                     android:id="@+id/text_view_avg"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:layout_alignLeft="@id/text_view_current_velocity"
+                    android:layout_alignLeft="@id/group_10"
+                    android:layout_marginLeft="75dp"
                     android:layout_alignBottom="@id/text_view_current_velocity"
                     android:layout_marginBottom="-25dp"
                     android:textColor="#FFF"
@@ -148,7 +150,8 @@
                     android:id="@+id/text_view_avg_speed"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:layout_alignRight="@id/text_view_current_velocity"
+                    android:layout_alignRight="@id/group_10"
+                    android:layout_marginRight="75dp"
                     android:layout_alignBottom="@id/text_view_current_velocity"
                     android:layout_marginBottom="-25dp"
                     android:textColor="#FFF"
@@ -201,7 +204,7 @@
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
                     android:layout_alignLeft="@id/vector_2"
-                    android:layout_alignTop="@id/vector_2"
+                    android:layout_alignTop="@id/vector_3"
                     android:layout_marginTop="-25dp"
                     android:textColor="#FFF"
                     android:fontFamily="@font/audiowide_regular"
