@@ -46,7 +46,7 @@
                 android:name=".DashboardActivity"
                 android:label="@string/title_activity_dashboard"
                 android:parentActivityName=".MainActivity"
-                android:theme="@style/AppTheme.NoActionBar">
+                android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen">
             <meta-data
                     android:name="android.support.PARENT_ACTIVITY"
                     android:value="hu.bme.aut.android.carmonitoringapp.MainActivity"/>

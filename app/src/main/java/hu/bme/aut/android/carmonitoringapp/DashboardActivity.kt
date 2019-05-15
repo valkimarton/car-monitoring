@@ -9,11 +9,12 @@ import android.os.Bundle
 import android.os.Handler
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
+import android.widget.SeekBar
 import android.widget.TextView
 
 import kotlinx.android.synthetic.main.activity_dashboard.*
 
-class DashboardActivity : AppCompatActivity(), SensorEventListener {
+class DashboardActivity : AppCompatActivity(), SensorEventListener{
 
     private lateinit var sensorManager: SensorManager
     private var accelerationSensor: Sensor? = null
@@ -21,6 +22,8 @@ class DashboardActivity : AppCompatActivity(), SensorEventListener {
     private lateinit var accelerationXView: TextView //= findViewById<TextView>(R.id.acceleration_x_text)
     private lateinit var accelerationYView: TextView //= findViewById<TextView>(R.id.acceleration_y_text)
     private lateinit var accelerationZView: TextView //= findViewById<TextView>(R.id.acceleration_z_text)
+    private lateinit var velocityDisplayView: TextView
+    private lateinit var seekBar: SeekBar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +35,9 @@ class DashboardActivity : AppCompatActivity(), SensorEventListener {
         accelerationXView = findViewById(R.id.acceleration_x_text)
         accelerationYView = findViewById(R.id.acceleration_y_text)
         accelerationZView = findViewById(R.id.acceleration_z_text)
+
+        velocityDisplayView = findViewById(R.id.text_view_current_velocity)
+        seekBar = findViewById(R.id.seekBar1)
 
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         sensorManager.registerListener(
@@ -51,6 +57,23 @@ class DashboardActivity : AppCompatActivity(), SensorEventListener {
             )
 
         }*/
+
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+
+            override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
+                // Display the current progress of SeekBar
+                velocityDisplayView.text = "$i"
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar) {
+                // Do something
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar) {
+                // Do something
+            }
+        })
+
     }
 
 
@@ -66,5 +89,7 @@ class DashboardActivity : AppCompatActivity(), SensorEventListener {
         //accelerationYView.setText( String.format("%.2f", event!!.values[1]) )
         //accelerationZView.setText( String.format("%.2f", event!!.values[2]) )
     }
+
+
 
 }
